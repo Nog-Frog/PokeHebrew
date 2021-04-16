@@ -3,33 +3,47 @@ on:
   issue_comment:
     types: [ edited ]
     comment:
-      id: 821125000
+      id: [ 821125000, 821124407 ]
     
 jobs:  
-  build-pokered:
+  build-pokered-boy:
     runs-on: ubuntu-latest
     container:
       image: nogfrog/pokered-build-env
+    env:
+      ACTIONS_ALLOW_UNSECURE_COMMANDS: true
     steps:
+      - name: Set version as env variable
+        run: |
+          if [ ${{ github.event.comment.id }} -eq 821125000 ]; then
+          export VERSION=pokered && export GENDER=boy
+          elif [ ${{ github.event.comment.id }} -eq 821124407 ]; then
+          export VERSION=pokered-girl && export GENDER=girl
+          fi
+          echo "::set-env name=VERSION::$VERSION"
+          echo "::set-env name=GENDER::$GENDER"
+
       - name: Check out pokered code
         uses: actions/checkout@v2
         with:
-          repository: Nog-Frog/pokered
+          repository: Nog-Frog/${{ env.VERSION }}
+          path: ${{ env.VERSION }}
   
       - name: Check out PokeHebrew
         uses: actions/checkout@v2
         with:
           persist-credentials: false
+          path: PokeHebrew
 
       - name: Build ROMs
         run: |
-          cd pokered
+          cd ${{ env.VERSION }}
           make
 
       - name: Replace old ROMs in PokeHebrew
         run: |
-          mv -uf pokered/pokered.gbc PokeHebrew/roms/red-boy.gbc
-          mv -uf pokered/pokeblue.gbc PokeHebrew/roms/blue-boy.gbc
+          mv -uf ${{ env.VERSION }}/pokered.gbc PokeHebrew/roms/red-${{ env.GENDER }}.gbc
+          mv -uf ${{ env.VERSION }}/pokeblue.gbc PokeHebrew/roms/blue-${{ env.GENDER }}.gbc
 
       - name: commit changes
         id: commit-step
@@ -38,7 +52,7 @@ jobs:
           cd PokeHebrew
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git commit -m "Update boy version roms" -a
+          git commit -m "Update ${{ env.GENDER }} version roms" -a
 
       - name: Push changes
         if: ${{ steps.commit-step.outcome == 'success' }}

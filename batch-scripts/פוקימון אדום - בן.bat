@@ -1,0 +1,1 @@
+start Sameboy\sameboy.exe ROMs\pokered-boy.gbc

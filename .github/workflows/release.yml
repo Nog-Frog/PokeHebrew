@@ -1,0 +1,33 @@
+name: Release
+on: push
+    
+jobs:  
+  build-pokered-boy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out PokeHebrew
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+          path: PokeHebrew
+
+      - name: Get latest version of SameBoy
+        run: |
+        export SAMEBOY_VERSION=$(curl --silent "https://api.github.com/repos/LIJI32/SameBoy/releases/latest" | grep -Po '"tag_name": "\K.*?(?=")')
+        wget -O sameboy.zip https://github.com/LIJI32/SameBoy/releases/download/$SAMEBOY_VERSION/sameboy_winsdl_$SAMEBOY_VERSION.zip
+        mkdir SameBoy
+        unzip sameboy.zip -d SameBoy
+
+      - name: Prepare files for release
+        run: |
+          mkdir -p PokeHebrew_with_SameBoy
+          mv PokeHebrew/roms PokeHebrew_with_SameBoy/roms
+          mv SameBoy PokeHebrew_with_SameBoy/SameBoy
+          mv PokeHebrew/batch-scripts PokeHebrew_with_SameBoy/
+
+      - name: Release
+        uses: fnkr/github-action-ghr@v1
+        env:
+          GHR_COMPRESS: zip
+          GHR_PATH: PokeHebrew_with_SameBoy/
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

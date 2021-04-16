@@ -1,0 +1,1 @@
+start Sameboy\sameboy.exe ROMs\pokeblue-girl.gbc
