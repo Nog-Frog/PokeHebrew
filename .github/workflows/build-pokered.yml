@@ -6,7 +6,7 @@ on:
       id: [ 821125000, 821124407 ]
     
 jobs:  
-  build-pokered-boy:
+  build-pokered:
     runs-on: ubuntu-latest
     container:
       image: nogfrog/pokered-build-env
