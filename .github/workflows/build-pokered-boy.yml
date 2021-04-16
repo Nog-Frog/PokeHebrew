@@ -1,0 +1,48 @@
+name: Build Pokered
+on:
+  issue_comment:
+    types: [ edited ]
+    comment:
+      id: 821125000
+    
+jobs:  
+  build-pokered:
+    runs-on: ubuntu-latest
+    container:
+      image: nogfrog/pokered-build-env
+    steps:
+      - name: Check out pokered code
+        uses: actions/checkout@v2
+        with:
+          repository: Nog-Frog/pokered
+  
+      - name: Check out PokeHebrew
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
+      - name: Build ROMs
+        run: |
+          cd pokered
+          make
+
+      - name: Replace old ROMs in PokeHebrew
+        run: |
+          mv -uf pokered/pokered.gbc PokeHebrew/roms/red-boy.gbc
+          mv -uf pokered/pokeblue.gbc PokeHebrew/roms/blue-boy.gbc
+
+      - name: commit changes
+        id: commit-step
+        continue-on-error: true # Don't fail job if there are no changes to commit
+        run: |
+          cd PokeHebrew
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git commit -m "Update boy version roms" -a
+
+      - name: Push changes
+        if: ${{ steps.commit-step.outcome == 'success' }}
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: master
